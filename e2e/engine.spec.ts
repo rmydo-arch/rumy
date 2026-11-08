@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 type Harness = {
   render(o?: object): Promise<{ width: number; height: number; type: string }>;
   sample(o: object, pts: [number, number][]): Promise<number[][]>;
-  renderHash(v: string): Promise<number>;
+  renderHash(v: string, o?: object): Promise<number>;
   renderNonBlank(): Promise<boolean>;
   loseContext(): Promise<void>;
 };
@@ -14,7 +14,7 @@ async function open(page: Page) {
   await page.waitForFunction(() => document.title === "ready");
 }
 const renderInHarness = async (page: Page, o: object) => { await open(page); return page.evaluate((x) => window.harness.render(x), o); };
-const renderHash = async (page: Page, v: string) => { await open(page); return page.evaluate((x) => window.harness.renderHash(x), v); };
+const renderHash = async (page: Page, v: string, o: object = {}) => { await open(page); return page.evaluate(([x, y]) => window.harness.renderHash(x, y), [v, o] as [string, object]); };
 const loseContext = async (page: Page) => { await open(page); await page.evaluate(() => window.harness.loseContext()); };
 const renderNonBlank = (page: Page) => page.evaluate(() => window.harness.renderNonBlank());
 
@@ -68,6 +68,43 @@ test("kırpma ortadan, bozulma yok", async ({ page }) => {
   // bands outside the crop never appear at the edges
   const edge = await sample(page, [[2, 360], [402, 360], [2, 100], [402, 600]]);
   for (const p of edge) expect(near(p, [255, 0, 255]) || near(p, [0, 255, 255])).toBe(false);
+});
+
+test("şablon kilitli formatta üretilir", async ({ page }) => {
+  const r = await renderInHarness(page, { style: "plak", format: "kare", quality: "export", title: "Şarkılar" });
+  expect([r.width, r.height]).toEqual([2048, 2048]);
+});
+
+test("başlık çıktıyı değiştirir", async ({ page }) => {
+  expect(await renderHash(page, "ozgun", { style: "plak", format: "kare", title: "A" })).not.toEqual(await renderHash(page, "ozgun", { style: "plak", format: "kare", title: "B" }));
+});
+
+test("üretim ağ isteği yapmaz", async ({ page }) => {
+  await open(page);
+  const requests: string[] = [];
+  page.on("request", (r) => requests.push(r.url()));
+  await page.evaluate(() => window.harness.render({ style: "anlik", year: 1977, options: ["dateStamp"] }));
+  expect(requests).toEqual([]);
+});
+
+test("şablon arka planı görünür, fotoğraf kendi alanına oturur", async ({ page }) => {
+  await open(page);
+  // kare preview 720: plak side margin is cream, photoRect center holds the black disc
+  const [margin, center] = await sample(page, [[29, 360], [360, 310]], { style: "plak", format: "kare" });
+  expect(near(margin, [244, 231, 207])).toBe(true);
+  expect(near(center, [0, 0, 0])).toBe(true);
+});
+
+test("anlık film çerçevesi alt kenarda kâğıt rengi bırakır", async ({ page }) => {
+  await open(page);
+  const [bottom] = await sample(page, [[288, 695]], { style: "anlik" });
+  expect(bottom.every((v) => v > 225)).toBe(true);
+});
+
+test("tarih damgası çıktıyı değiştirir, yıl yoksa çizilmez", async ({ page }) => {
+  const off = await renderHash(page, "ozgun", { year: 1977 });
+  expect(await renderHash(page, "ozgun", { year: 1977, options: ["dateStamp"] })).not.toEqual(off);
+  expect(await renderHash(page, "ozgun", { options: ["dateStamp"] })).toEqual(off);
 });
 
 test("Solgun kırmızıyı soluklaştırır", async ({ page }) => {

@@ -1,4 +1,7 @@
 // Dev-only harness for e2e/engine.spec.ts. Served by the Vite dev server, not part of the production build.
+import "@fontsource/fraunces/latin-900.css";
+import "@fontsource/fraunces/latin-ext-900.css";
+import { retro70 } from "../concepts/retro70";
 import type { FilmOptionId, FormatId, GradeSettings, Style, VariantId } from "../concepts/types";
 import { createFilterEngine } from "../engine/filterEngine";
 import type { PreparedPhoto } from "../engine/types";
@@ -28,17 +31,17 @@ async function testImage(): Promise<Blob> {
 
 let prepared: Promise<PreparedPhoto> | null = null;
 
-interface Opts { variant?: VariantId; format?: FormatId; quality?: "preview" | "export"; options?: FilmOptionId[]; }
+interface Opts { variant?: VariantId; format?: FormatId; quality?: "preview" | "export"; options?: FilmOptionId[]; style?: string; title?: string; year?: number; }
 
 async function renderBlob(o: Opts = {}) {
   prepared ??= testImage().then((b) => engine.prepare(b));
   return engine.render(await prepared, {
-    style,
+    style: retro70.styles.find((s) => s.id === o.style) ?? style,
     variant: o.variant ?? "ozgun",
     options: new Set(o.options ?? []),
-    year: null,
+    year: o.year ?? null,
     format: o.format ?? "post",
-    title: "",
+    title: o.title ?? "",
     quality: o.quality ?? "preview",
   });
 }
@@ -63,8 +66,8 @@ const harness = {
     const d = await pixels(r.blob);
     return points.map(([x, y]) => { const i = (y * r.width + x) * 4; return [d[i], d[i + 1], d[i + 2]]; });
   },
-  async renderHash(variant: VariantId) {
-    const d = await pixels((await renderBlob({ variant })).blob);
+  async renderHash(variant: VariantId, o: Opts = {}) {
+    const d = await pixels((await renderBlob({ ...o, variant })).blob);
     let h = 2166136261;
     for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d[i], 16777619) >>> 0;
     return h;
