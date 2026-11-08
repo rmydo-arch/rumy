@@ -62,6 +62,8 @@ function initGL() {
   gl!.bufferData(gl!.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl!.STATIC_DRAW);
   const loc = gl!.getAttribLocation(prog, 'p'); gl!.enableVertexAttribArray(loc); gl!.vertexAttribPointer(loc, 2, gl!.FLOAT, false, 0, 0);
 }
+let imgTex: WebGLTexture | null = null, maskGlTex: WebGLTexture | null = null;
+let imgDirty = true, maskDirty = true;
 function tex(unit: number) {
   const x = gl!.createTexture(); gl!.activeTexture(gl!.TEXTURE0 + unit); gl!.bindTexture(gl!.TEXTURE_2D, x);
   for (const [k, v] of [[gl!.TEXTURE_MIN_FILTER, gl!.LINEAR], [gl!.TEXTURE_MAG_FILTER, gl!.LINEAR], [gl!.TEXTURE_WRAP_S, gl!.CLAMP_TO_EDGE], [gl!.TEXTURE_WRAP_T, gl!.CLAMP_TO_EDGE]] as const) gl!.texParameteri(gl!.TEXTURE_2D, k, v);
@@ -75,9 +77,11 @@ function render(longEdge: number | null) {
   const w = Math.max(1, Math.round(bitmap.width * scale)), h = Math.max(1, Math.round(bitmap.height * scale));
   canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  tex(0); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
-  tex(1); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, maskW, maskH, 0, gl.RED, gl.UNSIGNED_BYTE, maskTex);
+  if (!imgTex) { imgTex = tex(0); imgDirty = true; }
+  if (!maskGlTex) { maskGlTex = tex(1); maskDirty = true; }
+  if (imgDirty) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, imgTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap); imgDirty = false; }
+  if (maskDirty) { gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, maskGlTex); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, maskW, maskH, 0, gl.RED, gl.UNSIGNED_BYTE, maskTex); maskDirty = false; }
   gl.uniform1i(gl.getUniformLocation(prog!, 'img'), 0); gl.uniform1i(gl.getUniformLocation(prog!, 'mask'), 1);
   const hex = $<HTMLInputElement>('bg').value;
   gl.uniform3f(gl.getUniformLocation(prog!, 'bg'), parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255);
@@ -91,22 +95,26 @@ function render(longEdge: number | null) {
 async function onFile(f: File) {
   try {
     lastBlob = null; for (const id of ['export', 'download', 'share']) $<HTMLButtonElement>(id).disabled = true;
+    const tTotal = t();
     log(`--- ${f.name} (${f.type}, ${f.size} bayt)`);
     bitmap?.close();
-    bitmap = await createImageBitmap(f, { imageOrientation: 'from-image' });
-    log(`Görsel: ${bitmap.width}x${bitmap.height}`);
-    if (!segmenter) await loadModel();
     let t0 = t();
+    bitmap = await createImageBitmap(f, { imageOrientation: 'from-image' });
+    imgDirty = true;
+    log(`Çözme süresi: ${(t() - t0).toFixed(0)} ms (${bitmap.width}x${bitmap.height})`);
+    if (!segmenter) await loadModel();
     // Segment a <=1024px copy: MediaPipe upsamples the mask to input size, so full-res input is wasteful.
+    const tr = t();
     const k = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
     const small = k < 1 ? await createImageBitmap(bitmap, { resizeWidth: Math.round(bitmap.width * k), resizeHeight: Math.round(bitmap.height * k), resizeQuality: 'high' }) : bitmap;
+    log(`Küçültme süresi: ${(t() - tr).toFixed(0)} ms`);
     t0 = t();
     const res = segmenter!.segment(small);
     if (small !== bitmap) small.close();
     const cm = res.categoryMask!;
     const data = cm.getAsUint8Array();
     maskW = cm.width; maskH = cm.height;
-    maskTex = new Uint8Array(data.length);
+    maskTex = new Uint8Array(data.length); maskDirty = true;
     let person = 0;
     for (let i = 0; i < data.length; i++) { if (data[i] !== 0) { maskTex[i] = 255; person++; } }
     cm.close();
@@ -115,6 +123,7 @@ async function onFile(f: File) {
     if (!prog) initGL();
     t0 = t(); const r = render(null);
     log(`Render süresi: ${(t() - t0).toFixed(0)} ms (${r.w}x${r.h})`);
+    log(`TOPLAM (dosya seçiminden render sonuna): ${(t() - tTotal).toFixed(0)} ms`);
     for (const id of ['export', 'download', 'share']) $<HTMLButtonElement>(id).disabled = id !== 'export';
   } catch (e) { err('onFile', e); }
 }
