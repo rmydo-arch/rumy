@@ -3,7 +3,7 @@ import type { FilmOptionId, FormatId, GradeSettings, Style, VariantId } from "..
 import { createFilterEngine } from "../engine/filterEngine";
 import type { PreparedPhoto } from "../engine/types";
 
-const grade: GradeSettings = { saturation: 1, contrast: 1, brightness: 1, warmth: 0, fade: 0, grain: 0.16, vignette: 0, leak: 0, mono: false };
+const grade: GradeSettings = { saturation: 1, contrast: 1, brightness: 1, warmth: 0, fade: 0, grain: 0, vignette: 0, leak: 0, mono: false };
 const style: Style = { id: "t", categoryId: "t", name: "t", thumbnail: "", kind: "filter", grade };
 
 let glCanvas: HTMLCanvasElement | null = null;
@@ -16,16 +16,13 @@ async function testImage(): Promise<Blob> {
   c.width = 1200;
   c.height = 800;
   const g = c.getContext("2d")!;
-  const grad = g.createLinearGradient(0, 0, 1200, 800);
-  grad.addColorStop(0, "#d04020");
-  grad.addColorStop(0.5, "#40a060");
-  grad.addColorStop(1, "#2040c0");
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 1200, 800);
-  g.fillStyle = "#f0e0a0";
-  g.beginPath();
-  g.arc(600, 400, 200, 0, Math.PI * 2);
-  g.fill();
+  // Asymmetric on purpose. The story crop of this 1200x800 source is x 375..825,
+  // so the magenta (x<300) and cyan (x>900) bands must never show up in the output.
+  const quad: [number, number, string][] = [[0, 0, "#e00000"], [600, 0, "#00c000"], [0, 400, "#e0e000"], [600, 400, "#0000e0"]];
+  for (const [x, y, col] of quad) { g.fillStyle = col; g.fillRect(x, y, 600, 400); }
+  g.fillStyle = "#ff00ff"; g.fillRect(0, 0, 300, 800);
+  g.fillStyle = "#00ffff"; g.fillRect(900, 0, 300, 800);
+  g.fillStyle = "#000000"; g.beginPath(); g.arc(600, 400, 100, 0, Math.PI * 2); g.fill();
   return new Promise((res) => c.toBlob((b) => res(b!), "image/png"));
 }
 
@@ -60,6 +57,11 @@ const harness = {
   async render(o?: Opts) {
     const r = await renderBlob(o);
     return { width: r.width, height: r.height, type: r.blob.type };
+  },
+  async sample(o: Opts, points: [number, number][]) {
+    const r = await renderBlob(o);
+    const d = await pixels(r.blob);
+    return points.map(([x, y]) => { const i = (y * r.width + x) * 4; return [d[i], d[i + 1], d[i + 2]]; });
   },
   async renderHash(variant: VariantId) {
     const d = await pixels((await renderBlob({ variant })).blob);

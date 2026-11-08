@@ -18,13 +18,32 @@ export function createFilterEngine(options: FilterEngineOptions = {}): ImageEngi
   let renderer: GlRenderer | null = null;
   let queue: Promise<unknown> = Promise.resolve();
 
-  async function run(prepared: PreparedPhoto, request: RenderRequest): Promise<RenderResult> {
+  async function attempt(prepared: PreparedPhoto, request: RenderRequest): Promise<RenderResult | null> {
     if (!renderer || renderer.isDead) renderer = new GlRenderer(makeCanvas());
+    const r = renderer;
     const { width, height } = outputSize(request.format, request.quality === "export" ? MAX_EXPORT_EDGE : MAX_PREVIEW_EDGE);
     const crop = coverCrop(prepared.width, prepared.height, width, height);
     const grade = resolveGrade(request.style.grade, request.variant, request.options, request.year, request.yearRange);
-    renderer.draw(prepared.bitmap, crop, width, height, grade);
-    return { blob: await toJpeg(renderer.canvas), width, height };
+    r.draw(prepared.bitmap, crop, width, height, grade);
+    if (r.isDead) return null;
+    let blob: Blob;
+    try {
+      blob = await toJpeg(r.canvas);
+    } catch (e) {
+      if (r.isDead) return null;
+      throw e;
+    }
+    // a context lost mid-draw or mid-toBlob yields a blank JPEG, so never trust it
+    if (r.isDead) return null;
+    return { blob, width, height };
+  }
+
+  async function run(prepared: PreparedPhoto, request: RenderRequest): Promise<RenderResult> {
+    for (let i = 0; i < 2; i++) {
+      const result = await attempt(prepared, request);
+      if (result) return result;
+    }
+    throw new Error("webgl_context_lost");
   }
 
   return {
@@ -40,8 +59,11 @@ export function createFilterEngine(options: FilterEngineOptions = {}): ImageEngi
       return result;
     },
     dispose(prepared) {
-      renderer?.release(prepared.bitmap);
-      prepared.bitmap.close();
+      // queued so a pending render never meets a closed bitmap
+      queue = queue.then(() => {
+        renderer?.release(prepared.bitmap);
+        prepared.bitmap.close();
+      });
     },
   };
 }

@@ -35,7 +35,7 @@ void main() {
   c += vec3(uWarmth, uWarmth * 0.2, -uWarmth);
   c = c * (1.0 - uFade * 0.35) + uFade * 0.35;
   // light leak: warm glow from the left edge
-  float leak = uLeak * smoothstep(0.5, 0.0, vUv.x);
+  float leak = uLeak * (1.0 - smoothstep(0.0, 0.5, vUv.x));
   c += vec3(1.0, 0.45, 0.1) * leak * 0.6;
   // vignette
   float d = distance(vUv, vec2(0.5));
