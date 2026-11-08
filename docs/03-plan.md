@@ -36,7 +36,7 @@
 
 ---
 
-### Görev 1: Doğrulama testi ve karar
+### Task 1: Doğrulama testi ve karar
 
 Atılabilir kod; TDD uygulanmaz. Analiz bölüm 12'deki soruları cevaplar. **Bu görev bitmeden Görev 2'ye geçilmez.**
 
@@ -77,7 +77,7 @@ git add docs/dogrulama-sonucu.md spikes && git commit -m "docs: record segmentat
 
 ---
 
-### Görev 2: Tasarım tuvalini kararlara göre güncelle
+### Task 2: Tasarım tuvalini kararlara göre güncelle
 
 Kod değil; tuval güncellemesi. BRD bölüm 9'daki farklar, 12 stil listesi ve kapak başlığı alanı uygulanır.
 
@@ -86,7 +86,7 @@ Kod değil; tuval güncellemesi. BRD bölüm 9'daki farklar, 12 stil listesi ve 
 
 ---
 
-### Görev 3: Proje iskeleti, tema ve yönlendirme
+### Task 3: Proje iskeleti, tema ve yönlendirme
 
 **Files:**
 - Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `playwright.config.ts`, `index.html`, `src/main.tsx`, `src/app/App.tsx`, `src/app/routes.ts`, `src/ui/theme.css`, `src/ui/AppHeader.tsx`, `src/app/App.test.tsx`
@@ -116,7 +116,7 @@ it("bilinmeyen yolda galeriye döner", () => {
 
 ---
 
-### Görev 4: Konsept kataloğu
+### Task 4: Konsept kataloğu
 
 **Files:**
 - Create: `src/concepts/types.ts`, `src/concepts/catalog.ts`, `src/concepts/retro70.ts`, `src/concepts/validate.ts`, `src/concepts/catalog.test.ts`
@@ -166,7 +166,7 @@ it("eksik sahne dosyası hatası verir", () => {
 
 ---
 
-### Görev 5: Konsept galerisi
+### Task 5: Konsept galerisi
 
 **Files:**
 - Create: `src/features/gallery/GalleryPage.tsx`, `src/features/gallery/ConceptCard.tsx`, `src/features/gallery/GalleryPage.test.tsx`
@@ -196,7 +196,7 @@ it("Yakında kartları tıklanamaz", () => {
 
 ---
 
-### Görev 6: Fotoğraf seçimi
+### Task 6: Fotoğraf seçimi
 
 **Files:**
 - Create: `src/engine/types.ts`, `src/engine/limits.ts`, `src/engine/photoFile.ts`, `src/engine/photoFile.test.ts`, `src/app/session.tsx`, `src/features/upload/UploadPage.tsx`, `src/features/upload/UploadPage.test.tsx`, `e2e/fixtures/exif-rotated.jpg`, `e2e/orientation.spec.ts`
@@ -253,7 +253,7 @@ test("EXIF ile döndürülmüş fotoğraf dik çözülür", async ({ page }) => 
 
 ---
 
-### Görev 7: Görsel motor (filtreler)
+### Task 7: Görsel motor (filtreler)
 
 **Files:**
 - Create: `src/engine/grade.ts`, `src/engine/grade.test.ts`, `src/engine/geometry.ts`, `src/engine/geometry.test.ts`, `src/engine/gl/renderer.ts`, `src/engine/gl/shaders.ts`, `src/engine/filterEngine.ts`, `src/dev/engine-harness.html`, `e2e/engine.spec.ts`
@@ -312,7 +312,7 @@ test("WebGL bağlamı kaybolunca yeniden işler", async ({ page }) => {
 
 ---
 
-### Görev 8: Stil ekranı
+### Task 8: Stil ekranı
 
 **Files:**
 - Create: `src/features/editor/EditorPage.tsx`, `src/features/editor/StyleGrid.tsx`, `src/features/editor/FilmOptions.tsx`, `src/features/editor/FormatPicker.tsx`, `src/features/editor/EditorPage.test.tsx`
@@ -360,7 +360,7 @@ it("başlık 30 karakterle sınırlı", () => {
 
 ---
 
-### Görev 9: İşleme, sonuç, indirme ve paylaşma
+### Task 9: İşleme, sonuç, indirme ve paylaşma
 
 **Files:**
 - Create: `src/features/result/ResultPage.tsx`, `src/features/result/CompareSlider.tsx`, `src/features/result/ProcessingPanel.tsx`, `src/services/share.ts`, `src/services/share.test.ts`, `src/features/result/ResultPage.test.tsx`
@@ -409,7 +409,7 @@ it("WebGL yoksa açıklama gösterir", async () => {
 
 ---
 
-### Görev 10: Sahne ve şablon stilleri
+### Task 10: Sahne ve şablon stilleri
 
 Görev 1 sahneleri iptal ettiyse yalnızca şablon bölümü yapılır.
 
@@ -456,7 +456,7 @@ test("filtre stili modeli indirmez", async ({ page }) => {
 
 ---
 
-### Görev 11: Giriş ve uygulama içi tarayıcı
+### Task 11: Giriş ve uygulama içi tarayıcı
 
 **Files:**
 - Create: `src/services/firebase.ts`, `src/services/auth.ts`, `src/services/auth.test.ts`, `src/services/inAppBrowser.ts`, `src/services/inAppBrowser.test.ts`, `src/features/auth/AuthDialog.tsx`, `src/features/auth/useAuthGate.tsx`, `src/features/auth/AuthDialog.test.tsx`, `.env.example`
@@ -516,7 +516,7 @@ it("doğrulanmamış e-posta ilk indirmeyi engellemez", async () => {
 
 ---
 
-### Görev 12: Talep toplama ve güvenlik kuralları
+### Task 12: Talep toplama ve güvenlik kuralları
 
 **Files:**
 - Create: `firestore.rules`, `firebase.json`, `tests/rules/firestore.test.ts`, `src/services/demand.ts`, `src/features/result/DemandButton.tsx`, `src/features/result/DemandButton.test.tsx`
@@ -556,7 +556,7 @@ it("kayıttan sonra onay gösterir", async () => {
 
 ---
 
-### Görev 13: Ölçüm
+### Task 13: Ölçüm
 
 **Files:**
 - Create: `src/services/analytics.ts`, `src/services/analytics.test.ts`
@@ -587,7 +587,7 @@ it("boyut aralığı", () => expect(sizeBucket(3*1024*1024)).toBe("2-8MB"));
 
 ---
 
-### Görev 14: KVKK, hesap silme, güvenlik başlıkları
+### Task 14: KVKK, hesap silme, güvenlik başlıkları
 
 **Files:**
 - Create: `src/features/legal/PrivacyPage.tsx`, `src/features/account/AccountPage.tsx`, `src/features/account/AccountPage.test.tsx`, `public/_headers`, `e2e/privacy.spec.ts`
@@ -624,7 +624,7 @@ test("fotoğraf ağ isteğine girmez", async ({ page }) => {
 
 ---
 
-### Görev 15: Uçtan uca test, gerçek cihaz ve yayın
+### Task 15: Uçtan uca test, gerçek cihaz ve yayın
 
 **Files:**
 - Create: `e2e/flow.spec.ts`, `docs/cihaz-kontrol-listesi.md`, `.github/workflows/ci.yml`
