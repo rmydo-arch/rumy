@@ -343,7 +343,7 @@ Onaylı tasarım tuvali, BRD'nin 9. bölümündeki farklara göre 2. adımdan ö
 
 ## 16. Onaylanan kararlar
 
-1. İlk stil listesi bölüm 6'daki 12 stildir.
+1. İlk stil listesi bölüm 6'daki filtre ve şablon gruplarından oluşan 9 stildir. Üç sahne stili (Turuncu Salon, Disko Gecesi, Gazino Sahnesi) ve MediaPipe, telefonda kesim doğrulanana kadar ertelenmiştir. İlk testte Samsung M23'te görüntü alınamadı, MacBook'ta kısmi bozukluk bildirildi; nedenleri henüz bilinmiyor.
 2. Sayısal hedefler bölüm 9'daki gibidir.
 3. E-posta doğrulaması ilk indirmeyi engellemez; talepler yalnızca doğrulanmış hesaplardan sayılır.
 4. Afiş ve kapaklarda 30 karakterlik kullanıcı başlığı vardır.

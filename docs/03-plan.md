@@ -38,7 +38,7 @@
 
 ### Task 1: Doğrulama testi ve karar
 
-Atılabilir kod; TDD uygulanmaz. Analiz bölüm 12'deki soruları cevaplar. **Bu görev bitmeden Görev 2'ye geçilmez.**
+Atılabilir kod; TDD uygulanmaz. Analiz bölüm 12'deki soruları cevaplar. **Kullanıcı kararı (2026-11-08):** Sahne stilleri kesim doğrulanana kadar ertelendi; bu görev sonraki görevleri bekletmez. Gerçek cihaz testi Görev 15'te yapılır.
 
 **Files:**
 - Create: `spikes/segmentation/` (index.html, main.ts, package.json), `docs/dogrulama-sonucu.md`
@@ -150,9 +150,9 @@ it("Retro rafı on yıl sırasıyla", () =>
 it("12 ek konsept var", () => expect(catalog[1].concepts).toHaveLength(12));
 it("yalnızca retro-70 canlı", () =>
   expect(catalog.flatMap(s => s.concepts).filter(c => c.status === "live").map(c => c.id)).toEqual(["retro-70"]));
-it("70'ler 5 filtre, 3 sahne, 4 şablon içerir", () => {
+it("70'ler ilk sürümde 5 filtre ve 4 şablon içerir, sahne içermez", () => {
   const k = getLiveConcept("retro-70")!.styles.map(s => s.kind);
-  expect([k.filter(x => x==="filter").length, k.filter(x => x==="scene").length, k.filter(x => x==="template").length]).toEqual([5,3,4]);
+  expect([k.filter(x => x==="filter").length, k.filter(x => x==="scene").length, k.filter(x => x==="template").length]).toEqual([5,0,4]);
 });
 it("eksik sahne dosyası hatası verir", () => {
   expect(validateCatalog(catalogWithSceneMissingAsset())).toContain("retro-70/salon: sceneAsset eksik");
@@ -209,7 +209,7 @@ it("Yakında kartları tıklanamaz", () => {
 export type EngineCapability = "grade" | "segment" | "prompt" | "identity";
 export interface PreparedPhoto { bitmap: ImageBitmap; width: number; height: number; }
 export interface RenderRequest { style: Style; variant: VariantId; options: ReadonlySet<FilmOptionId>; year: number | null; yearRange?: { min: number; max: number }; format: FormatId; title: string; quality: "preview" | "export"; }
-export interface RenderResult { blob: Blob; width: number; height: number; segmentationFallback: boolean; }
+export interface RenderResult { blob: Blob; width: number; height: number; }
 export interface ImageEngine { id: string; capabilities: ReadonlySet<EngineCapability>; prepare(photo: Blob): Promise<PreparedPhoto>; render(prepared: PreparedPhoto, request: RenderRequest): Promise<RenderResult>; dispose(prepared: PreparedPhoto): void; }
 ```
 
@@ -306,7 +306,7 @@ test("WebGL bağlamı kaybolunca yeniden işler", async ({ page }) => {
 
 - [ ] **Adım 2:** Testleri çalıştır. Beklenen: FAIL.
 - [ ] **Adım 3:** `grade.ts` ve `geometry.ts` saf fonksiyonlarını yaz. Yıl: `t=(year-min)/(max-min)`, `warmth += .06-.12*t`, `fade += .05*(1-t)`. Seçenekler: `grain`→`max(g,.32)`, `leak`→`max(l,.6)`, `fade`→`+.15`, `orangeShift`→`warmth+.1`, `vignette`→`max(v,.4)`. `dateStamp` motorda çerçeveli stillerde veya seçenek açıkken çizilir.
-- [ ] **Adım 4:** WebGL2 hattını yaz: tek shader (renk, sıcaklık, solma, gren, vinyet, sızıntı). Sonuç `canvas.toBlob("image/jpeg", .9)`. `webglcontextlost` sonrası bağlam ve dokular bir sonraki `render` çağrısında yeniden kurulur; WebGL2 yoksa `Error("webgl_unavailable")`. `createFilterEngine` yetenekleri: `grade`, `segment`.
+- [ ] **Adım 4:** WebGL2 hattını yaz: tek shader (renk, sıcaklık, solma, gren, vinyet, sızıntı). Sonuç `canvas.toBlob("image/jpeg", .9)`. `webglcontextlost` sonrası bağlam ve dokular bir sonraki `render` çağrısında yeniden kurulur; WebGL2 yoksa `Error("webgl_unavailable")`. `createFilterEngine` yeteneği: yalnızca `grade`.
 - [ ] **Adım 5:** `npx vitest run src/engine` ve `npx playwright test e2e/engine.spec.ts` çalıştır. Beklenen: PASS.
 - [ ] **Adım 6:** Commit: `feat: add WebGL filter engine`.
 
@@ -409,50 +409,46 @@ it("WebGL yoksa açıklama gösterir", async () => {
 
 ---
 
-### Task 10: Sahne ve şablon stilleri
+### Task 10: Şablon stilleri
 
-Görev 1 sahneleri iptal ettiyse yalnızca şablon bölümü yapılır.
+Sahne stilleri ve MediaPipe bu sürümde yoktur. `Style.kind` tipindeki `"scene"` değeri sonraki sürüm için kalır.
 
 **Files:**
-- Create: `src/engine/segmenter.ts`, `src/engine/mask.ts`, `src/engine/mask.test.ts`, `src/engine/compose.ts`, `src/engine/compose.test.ts`, `scripts/copy-mediapipe.mjs`, `public/scenes/{salon,disko,gazino}.svg`, `public/templates/{plak,yesilcam,kaset,punk}.svg`
-- Modify: `src/engine/filterEngine.ts`, `src/features/result/ResultPage.tsx`, `e2e/engine.spec.ts`
+- Create: `src/engine/compose.ts`, `src/engine/compose.test.ts`, `public/templates/{plak,yesilcam,kaset,punk}.svg`
+- Modify: `src/engine/filterEngine.ts`, `e2e/engine.spec.ts`
 
 **Interfaces:**
 - Consumes: `RenderRequest`, `TemplateSettings`
-- Produces: `personMask(categories: Uint8Array): Uint8Array`, `maskCoverage(mask: Uint8Array): number`, `MIN_PERSON_COVERAGE = 0.02`, `clampTitle(text: string): string`
+- Produces: `clampTitle(text: string): string`
 
 - [ ] **Adım 1: Failing test yaz**
 
 ```ts
-it("0 dışındaki sınıflar kişidir", () => expect([...personMask(new Uint8Array([0,1,2,3,4,5]))]).toEqual([0,255,255,255,255,255]));
-it("kapsama oranı", () => expect(maskCoverage(new Uint8Array([0,255,0,255]))).toBeCloseTo(.5));
 it("başlık 30 karaktere kırpılır ve boşlukları temizlenir", () => expect(clampTitle("  " + "ş".repeat(40))).toHaveLength(30));
 ```
 
 ```ts
 // e2e/engine.spec.ts
-test("kişi yoksa sade filtreye düşer", async ({ page }) => {
-  const r = await renderInHarness(page, { style:"salon", fixture:"landscape.jpg" });
-  expect(r.segmentationFallback).toBe(true);
+test("şablon kilitli formatta üretilir", async ({ page }) => {
+  const r = await renderInHarness(page, { style:"plak", format:"kare", quality:"export", title:"Şarkılar" });
+  expect([r.width,r.height]).toEqual([2048,2048]);
 });
-test("model indirilemezse sade filtreye düşer", async ({ page }) => {
-  await page.route("**/models/**", r => r.abort());
-  const r = await renderInHarness(page, { style:"salon", fixture:"portrait.jpg" });
-  expect(r.segmentationFallback).toBe(true);
+test("başlık çıktıyı değiştirir", async ({ page }) => {
+  expect(await renderHash(page,"ozgun",{ style:"plak", title:"A" })).not.toEqual(await renderHash(page,"ozgun",{ style:"plak", title:"B" }));
 });
-test("filtre stili modeli indirmez", async ({ page }) => {
-  const models = trackRequests(page, "**/models/**");
+test("üretim ağ isteği yapmaz", async ({ page }) => {
+  const requests = trackRequests(page, "**/*");
+  const before = requests.count();
   await renderInHarness(page, { style:"anlik", fixture:"portrait.jpg" });
-  expect(models.count()).toBe(0);
+  expect(requests.count()).toBe(before);
 });
 ```
 
 - [ ] **Adım 2:** Testi çalıştır. Beklenen: FAIL.
-- [ ] **Adım 3:** `copy-mediapipe.mjs` (postinstall): WASM dosyalarını `public/models/wasm/` altına kopyalar; model Görev 1'de seçilen dosya olarak `public/models/` altına eklenir. Maske: kişi sınıfları, bulanıklaştırma ile yumuşatma, fotoğraf çözünürlüğüne büyütme. Kapsama `MIN_PERSON_COVERAGE` altındaysa `segmentationFallback:true`.
-- [ ] **Adım 4:** `compose.ts`: Canvas 2D ile katman sırası sahne, kişi (WebGL çıktısı), çerçeve, başlık, tarih damgası. Yazı tipi çizimden önce `document.fonts.load` ile beklenir.
-- [ ] **Adım 5:** Kolaj/afiş dilinde SVG'leri çiz. Sonuç ekranına fallback mesajını ekle: "Kişiyi net ayıramadık, sade filtreyi uyguladık. Daha net bir fotoğraf deneyebilirsin."
-- [ ] **Adım 6:** Testleri çalıştır. Beklenen: PASS.
-- [ ] **Adım 7:** Commit: `feat: add scene and template styles`.
+- [ ] **Adım 3:** `compose.ts`: Canvas 2D ile katman sırası şablon, fotoğraf (WebGL çıktısı, `photoRect` içine `coverCrop`), çerçeve, başlık (`titleRect`), tarih damgası. Yazı tipi çizimden önce `document.fonts.load` ile beklenir. Tüm şablon görselleri aynı alan adından gelir.
+- [ ] **Adım 4:** Afiş ve kapak dilinde SVG'leri çiz.
+- [ ] **Adım 5:** Testleri çalıştır. Beklenen: PASS.
+- [ ] **Adım 6:** Commit: `feat: add template styles`.
 
 ---
 
@@ -648,7 +644,7 @@ test("galeri > fotoğraf > stil > sonuç > giriş > indirme", async ({ page }) =
 - [ ] **Adım 2:** `npx playwright test` çalıştır, kırılanları düzelt. Beklenen: tüm testler PASS.
 - [ ] **Adım 3:** CI: `npm ci`, `tsc --noEmit`, `vitest run`, Playwright.
 - [ ] **Adım 4:** Firebase ve PostHog projelerini ücretsiz planda kullanıcıyla birlikte kur; kotaları ve Cloudflare ticari kullanım koşulunu resmî sayfalardan doğrula.
-- [ ] **Adım 5:** Gerçek cihaz listesini tamamla: iPhone Safari, Android Chrome, Instagram ve TikTok tarayıcıları; 12 stil, 3 format, indirme, paylaşma, giriş.
+- [ ] **Adım 5:** Gerçek cihaz listesini tamamla: iPhone Safari, Android Chrome, Instagram ve TikTok tarayıcıları; 9 stil, 3 format, indirme, paylaşma, giriş. Sayfada hata ve cihaz bilgisini kopyalanabilir metin olarak gösteren geçici bir tanılama ekranı sağla; kullanıcı sonuçları buradan iletir.
 - [ ] **Adım 6:** `run` skill ile uygulamayı aç; `security-review` ve `code-review` çalıştır, bulguları düzelt.
 - [ ] **Adım 7:** Yayın öncesi kapı: hukuki metin onayı alınmadan herkese açık yayın yapılmaz. Onay sonrası `wrangler pages deploy dist`, yayın adresini kullanıcıyla doğrula.
 - [ ] **Adım 8:** Commit: `chore: add e2e flow, CI and release checklist`, ardından `superpowers:finishing-a-development-branch`.
