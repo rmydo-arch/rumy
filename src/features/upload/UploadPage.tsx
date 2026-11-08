@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { paths } from "../../app/routes";
 import { useSession } from "../../app/session";
@@ -16,6 +16,18 @@ export function UploadPage() {
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const busyRef = useRef(false);
+  const attemptRef = useRef(0);
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
+
+  useEffect(() => {
+    // Leaving the page or switching concept invalidates any decode in flight.
+    return () => {
+      attemptRef.current += 1;
+      busyRef.current = false;
+      setBusy(false);
+    };
+  }, [id]);
 
   if (!concept) return <Navigate to={paths.gallery} replace />;
 
@@ -27,19 +39,29 @@ export function UploadPage() {
       return;
     }
     busyRef.current = true;
+    const attempt = attemptRef.current;
     setBusy(true);
     setError(null);
+    let bitmap: ImageBitmap;
     try {
-      const bitmap = await decodePhoto(file, MAX_EXPORT_EDGE);
-      setPhoto({ bitmap, width: bitmap.width, height: bitmap.height });
-      if (selection.conceptId !== concept.id) resetSelection(concept);
-      navigate(paths.editor(concept.id));
+      bitmap = await decodePhoto(file, MAX_EXPORT_EDGE);
     } catch {
-      setError("corrupt");
-    } finally {
-      busyRef.current = false;
-      setBusy(false);
+      if (attempt === attemptRef.current) {
+        setError("corrupt");
+        busyRef.current = false;
+        setBusy(false);
+      }
+      return;
     }
+    if (attempt !== attemptRef.current) {
+      bitmap.close();
+      return;
+    }
+    busyRef.current = false;
+    setBusy(false);
+    setPhoto({ bitmap, width: bitmap.width, height: bitmap.height });
+    if (selectionRef.current.conceptId !== concept.id) resetSelection(concept);
+    navigate(paths.editor(concept.id));
   }
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
