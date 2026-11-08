@@ -1,0 +1,12 @@
+.upload { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.upload__back { align-self: flex-start; background: none; border: 0; padding: 0 8px; color: var(--brand); font-weight: 600; }
+.upload__concept { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.upload__title { margin: 0; font-size: clamp(30px, 6vw, 44px); line-height: 1.1; }
+.upload__drop { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 16px; text-align: center; background: var(--surface); border: 3px dashed var(--ink); border-radius: 24px; cursor: pointer; }
+.upload__drop:focus-within { outline: 3px solid var(--brand); outline-offset: 2px; }
+.upload__drop--active { border-color: var(--brand); }
+.upload__input { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.upload__pill { display: inline-flex; align-items: center; justify-content: center; min-height: var(--touch-min); padding: 0 24px; border-radius: 999px; background: var(--brand); color: var(--surface); font-weight: 600; }
+.upload__note { color: var(--text-secondary); font-size: 14px; }
+.upload__error { margin: 0; color: var(--error); font-weight: 600; }
+.upload__hint { margin: 0; color: var(--text-secondary); font-size: 14px; }
