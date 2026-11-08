@@ -1,0 +1,22 @@
+{
+  "name": "segmentation-spike",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "postinstall": "node scripts/setup.mjs",
+    "dev": "vite --host",
+    "build": "vite build",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "playwright": "^1.65.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.2.2"
+  }
+}

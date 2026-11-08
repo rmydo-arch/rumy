@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kesim Testi</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;padding:12px;max-width:640px;margin-inline:auto}
+button,select,input{font-size:16px;padding:10px;margin:4px 0}
+canvas{width:100%;height:auto;border:1px solid #ccc;background:#eee}
+pre{background:#111;color:#9f9;padding:8px;font-size:12px;white-space:pre-wrap;word-break:break-word;min-height:80px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<h1>Kesim Testi</h1>
+<input id="file" type="file" accept="image/jpeg,image/png,image/webp">
+<div class="row">
+  <label>Parlaklık <input id="bright" type="range" min="0.5" max="1.5" step="0.05" value="1.15"></label>
+  <label>Doygunluk <input id="sat" type="range" min="0" max="2" step="0.05" value="1.4"></label>
+  <label>Sahne rengi <input id="bg" type="color" value="#e8a0b4"></label>
+</div>
+<canvas id="out" width="300" height="150"></canvas>
+<div class="row">
+  <label>Uzun kenar
+    <select id="edge"><option>2048</option><option>1536</option><option>1024</option></select>
+  </label>
+  <button id="export" disabled>JPEG dışa aktar</button>
+  <button id="download" disabled>İndir</button>
+  <button id="share" disabled>Paylaş</button>
+</div>
+<pre id="log"></pre>
+<script type="module" src="/main.ts"></script>
+</body>
+</html>
