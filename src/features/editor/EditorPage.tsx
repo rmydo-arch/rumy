@@ -1,19 +1,19 @@
-import { useId, useMemo, useState, type CSSProperties } from "react";
+import { useId, useState, type CSSProperties } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { paths } from "../../app/routes";
 import { useSession } from "../../app/session";
 import { getLiveConcept } from "../../concepts/catalog";
 import type { FormatId, LiveConcept, Style } from "../../concepts/types";
 import { useEngine } from "../../engine/EngineContext";
-import type { PreparedPhoto, RenderRequest } from "../../engine/types";
+import type { PreparedPhoto } from "../../engine/types";
+import { useSelectionRender, type RenderFailure } from "../../engine/useSelectionRender";
 import { FilmOptions } from "./FilmOptions";
 import { FormatPicker } from "./FormatPicker";
 import { StyleGrid } from "./StyleGrid";
-import { usePreview, type PreviewError } from "./usePreview";
 import "./editor.css";
 
 const RATIO: Record<FormatId, string> = { post: "4 / 5", kare: "1 / 1", story: "9 / 16" };
-const ERROR_TEXT: Record<PreviewError, string> = {
+const ERROR_TEXT: Record<RenderFailure, string> = {
   unsupported: "Bu cihaz görsel işlemeyi desteklemiyor.",
   failed: "Önizleme hazırlanamadı. Başka bir stil dene.",
 };
@@ -32,16 +32,10 @@ function Editor({ concept, photo }: { concept: LiveConcept; photo: PreparedPhoto
   const engine = useEngine();
   const { selection, updateSelection } = useSession();
   const promptId = useId();
-  const style = concept.styles.find((s) => s.id === selection.styleId) ?? concept.styles[0];
+  const { style, output, error } = useSelectionRender(engine, photo, concept, selection, "preview");
   const [categoryId, setCategoryId] = useState(style.categoryId);
-  const { variant, options, year, format, title } = selection;
+  const { options, year, format, title } = selection;
   const { yearRange } = concept;
-
-  const request = useMemo<RenderRequest>(
-    () => ({ style, variant, options, year, yearRange, format, title, quality: "preview" }),
-    [style, variant, options, year, yearRange, format, title],
-  );
-  const preview = usePreview(engine, photo, request);
 
   function pickStyle(next: Style) {
     const locked = next.template?.lockedFormat;
@@ -54,7 +48,7 @@ function Editor({ concept, photo }: { concept: LiveConcept; photo: PreparedPhoto
     <main className="editor" style={pageVars}>
       <section className="editor__stage">
         <div className="editor__preview" style={{ aspectRatio: RATIO[format] }}>
-          {preview.url && <img className="editor__image" src={preview.url} alt="Önizleme" />}
+          {output && <img className="editor__image" src={output.url} alt="Önizleme" />}
         </div>
         <div className="editor__stage-controls">
           <FormatPicker value={format} locked={style.template?.lockedFormat} onChange={(f) => updateSelection({ format: f })} />
@@ -62,9 +56,9 @@ function Editor({ concept, photo }: { concept: LiveConcept; photo: PreparedPhoto
             Fotoğrafı değiştir
           </button>
         </div>
-        {preview.error && (
+        {error && (
           <p role="alert" className="editor__error">
-            {ERROR_TEXT[preview.error]}
+            {ERROR_TEXT[error]}
           </p>
         )}
       </section>

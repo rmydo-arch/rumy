@@ -1,68 +1,17 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useEffect, useState, type ReactNode } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { vi } from "vitest";
+import { BrowserRouter } from "react-router-dom";
 import { App } from "../../app/App";
 import { paths } from "../../app/routes";
-import { SessionProvider, useSession } from "../../app/session";
-import type { Selection } from "../../concepts/types";
-import { EngineProvider } from "../../engine/EngineContext";
-import type { EngineCapability, ImageEngine, PreparedPhoto, RenderResult } from "../../engine/types";
+import type { RenderResult } from "../../engine/types";
+import { fakeEngine, fakePhoto, renderPage, stubObjectUrls, type Setup } from "../../test-utils/session";
 import { EditorPage } from "./EditorPage";
 
-const fakePhoto = { bitmap: { close: vi.fn() }, width: 100, height: 200 } as unknown as PreparedPhoto;
 const user = userEvent.setup();
+const renderAt = (url: string, setup?: Setup) => renderPage(url, paths.editor(":id"), <EditorPage />, setup);
+const renderAtTemplate = () => renderAt("/k/retro-70/stil", { selection: { styleId: "plak", format: "kare" } });
 
-function fakeEngine(capabilities: EngineCapability[] = ["grade"]) {
-  return {
-    id: "fake",
-    capabilities: new Set(capabilities),
-    prepare: vi.fn(),
-    render: vi.fn(async (): Promise<RenderResult> => ({ blob: new Blob([], { type: "image/one" }), width: 1, height: 1 })),
-    dispose: vi.fn(),
-  } satisfies ImageEngine;
-}
-
-function Seed({ photo, selection, children }: { photo: PreparedPhoto | null; selection?: Partial<Selection>; children: ReactNode }) {
-  const { setPhoto, updateSelection } = useSession();
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    setPhoto(photo);
-    if (selection) updateSelection(selection);
-    setReady(true);
-  }, []);
-  return ready ? children : null;
-}
-
-interface Setup { photo?: PreparedPhoto | null; engine?: ImageEngine; selection?: Partial<Selection>; }
-
-async function renderAt(path: string, { photo = fakePhoto, engine = fakeEngine(), selection }: Setup = {}) {
-  window.history.pushState({}, "", path);
-  await act(async () => {
-    render(
-      <BrowserRouter>
-        <SessionProvider>
-          <EngineProvider engine={engine}>
-            <Seed photo={photo} selection={selection}>
-              <Routes>
-                <Route path={paths.editor(":id")} element={<EditorPage />} />
-                <Route path="*" element={null} />
-              </Routes>
-            </Seed>
-          </EngineProvider>
-        </SessionProvider>
-      </BrowserRouter>,
-    );
-  });
-}
-
-const renderAtTemplate = (engine?: ImageEngine) => renderAt("/k/retro-70/stil", { engine, selection: { styleId: "plak", format: "kare" } });
-
-beforeEach(() => {
-  URL.createObjectURL = vi.fn((b: Blob) => `blob:${b.type}`) as typeof URL.createObjectURL;
-  URL.revokeObjectURL = vi.fn();
-});
+beforeEach(stubObjectUrls);
 
 describe("EditorPage", () => {
   it("fotoğraf yoksa fotoğraf seçimine döner", async () => {
