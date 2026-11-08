@@ -1,8 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import "@fontsource/caprasimo/latin-400.css";
-import "@fontsource/caprasimo/latin-ext-400.css";
+import "@fontsource/fraunces/latin-900.css";
+import "@fontsource/fraunces/latin-ext-900.css";
 import "@fontsource/outfit/latin-400.css";
 import "@fontsource/outfit/latin-ext-400.css";
 import "@fontsource/outfit/latin-600.css";

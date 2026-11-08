@@ -13,7 +13,7 @@ Kullanıcı fotoğrafları yalnızca tarayıcıda işlenir. Hiçbir sunucuya, Fi
 - `npm run e2e` Playwright (mobil profil, dev sunucusunu başlatır)
 
 ## Yığın
-React 19, TypeScript strict, Vite, React Router, Vitest, Playwright. Yazı tipleri `@fontsource` ile paketlenir (Caprasimo, Outfit; latin-ext Türkçe için).
+React 19, TypeScript strict, Vite, React Router, Vitest, Playwright. Yazı tipleri `@fontsource` ile paketlenir (Fraunces 900, Outfit; latin-ext Türkçe için).
 
 ## Klasörler
 - `src/app/` uygulama kabuğu, yollar (`routes.ts`)

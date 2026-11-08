@@ -21,7 +21,7 @@
 - Arayüz Türkçe, `<html lang="tr">`; küçük harf dönüşümlerinde `toLocaleLowerCase("tr")`.
 - Tarayıcılar: iOS Safari 16+, Android Chrome ve masaüstü Chrome/Safari/Edge son iki sürüm.
 - Renkler: mürekkep `#1F1A17`, kâğıt `#F7F1E4`, yüzey `#FFFBF2`, marka `#BF4316`, ikincil metin `#5F5247`, hata `#A32A12`.
-- Yazı tipleri projeyle paketlenir: Caprasimo ve Outfit (`@fontsource`, `latin-ext` dahil).
+- Yazı tipleri projeyle paketlenir: Fraunces 900 (Caprasimo'da ş, ğ, İ olmadığı için değiştirildi) ve Outfit (`@fontsource`, `latin-ext` dahil).
 - Dış servislere yalnızca `src/services/` üzerinden erişilir.
 - Commit mesajları şu satırla biter: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - Tüm işler `feat/asama-1` dalında yapılır; `main` dalına doğrudan commit atılmaz.

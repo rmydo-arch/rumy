@@ -5,7 +5,7 @@
   --brand: #bf4316;
   --text-secondary: #5f5247;
   --error: #a32a12;
-  --font-display: "Caprasimo", serif;
+  --font-display: "Fraunces", serif;
   --font-body: "Outfit", system-ui, sans-serif;
   --touch-min: 44px;
 }
@@ -27,7 +27,7 @@ body {
 
 h1 {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 900;
 }
 
 button {
